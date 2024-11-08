@@ -6,14 +6,9 @@ import 'package:shared_preferences/shared_preferences.dart';
 
 class LocalStorage {
   @protected
-  final String namespace;
-
-  @protected
   Map<String, ExperimentVariant> map = {};
 
-  LocalStorage({required String apiKey}) : namespace = _getNamespace(apiKey) {
-    SharedPreferences.setPrefix(namespace);
-  }
+  LocalStorage({required String apiKey});
 
   void put(String key, ExperimentVariant value) {
     map[key] = value;
@@ -40,9 +35,12 @@ class LocalStorage {
     Map<String, ExperimentVariant> newMap = {};
 
     for (String key in keys) {
-      dynamic value = prefs.get(key);
-
-      newMap[key] = ExperimentVariant.fromMap(jsonDecode(value));
+      try {
+        dynamic value = prefs.get(key);
+        newMap[key] = ExperimentVariant.fromMap(jsonDecode(value));
+      } catch (_) {
+        // ignore
+      }
     }
 
     map = newMap;
@@ -54,13 +52,5 @@ class LocalStorage {
     map.forEach((key, value) {
       prefs.setString(key, value.toJsonAsString());
     });
-  }
-
-  static _getNamespace(String apiKey) {
-    final apiKeyToSubstring = apiKey.length > 6 ? apiKey : 'default-api-key';
-    String shortApiKey =
-        apiKeyToSubstring.substring(apiKeyToSubstring.length - 6);
-
-    return 'ampli-$shortApiKey';
   }
 }
